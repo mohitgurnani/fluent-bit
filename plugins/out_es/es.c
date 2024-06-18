@@ -669,6 +669,7 @@ static int elasticsearch_error_check(struct flb_elasticsearch *ctx,
     ret = flb_pack_json(c->resp.payload, c->resp.payload_size,
                         &out_buf, &out_size, &root_type, NULL);
     if (ret == -1) {
+        flb_plg_error(ctx->ins, "Ret -1, could not pack json");
         /* Is this an incomplete HTTP Request ? */
         if (c->resp.payload_size <= 0) {
             return FLB_TRUE;
@@ -778,8 +779,9 @@ static int elasticsearch_error_check(struct flb_elasticsearch *ctx,
                             goto done;
                         }
                         /* Check for errors other than version conflict (document already exists) */
-                        if (item_val.via.i64 != 409) {
+                        if (item_val.via.i64 != 409 && !(item_val.via.i64 >= 200 && item_val.via.i64 < 300)) {
                             check = FLB_TRUE;
+                            flb_plg_error(ctx->ins, "409 error");
                             goto done;
                         }
                     }
